@@ -65,8 +65,7 @@ import 'package:http/http.dart' as http;
     void initState() {
       super.initState();
       currentUser = _auth.currentUser!;
-      // vOZWx7FEJsEjm/2iRW94TA==cPAjO7IHydcSHTRl
-      apiService = ApiService(apiKey: 'vOZWx7FEJsEjm/2iRW94TA==cPAjO7IHydcSHTRl');
+      apiService = ApiService(apiKey: 'Add Your API Key');
       firestoreService = FirestoreService(userId: currentUser.uid);
 
       tabController = TabController(length: tabNames.length, vsync: this);

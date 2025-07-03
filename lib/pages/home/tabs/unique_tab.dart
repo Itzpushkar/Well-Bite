@@ -31,7 +31,7 @@ class _UniqueTabState extends State<UniqueTab> {
   Future<List<dynamic>> fetchUniqueData() async {
 
     final uri = Uri.parse('https://api.api-ninjas.com/v1/quotes');
-    final response = await http.get(uri, headers: {'X-Api-Key': "vOZWx7FEJsEjm/2iRW94TA==cPAjO7IHydcSHTRl"});
+    final response = await http.get(uri, headers: {'X-Api-Key': "Add Your API Key"});
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
