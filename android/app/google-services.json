@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "599699978091",
+    "project_id": "wellbite-85e6c",
+    "storage_bucket": "wellbite-85e6c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:599699978091:android:9aed67041438c0f7e7be2e",
+        "android_client_info": {
+          "package_name": "com.example.wellbite"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5QpWOS2rQ0nqitdVZxFgVcvix5IX5dAc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
