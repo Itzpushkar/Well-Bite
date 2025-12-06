@@ -22,6 +22,8 @@ class _CommunityTabState extends State<CommunityTab>
     '🧘‍♂️ Meditate daily.',
   ];
 
+  bool isHover = false;
+
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -61,6 +63,40 @@ class _CommunityTabState extends State<CommunityTab>
     _tipController.clear();
   }
 
+  void _showDeleteDialog(String docId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Deletion'),
+        content: const Text('Are you sure you want to delete the post?'),
+        actions: [
+          ElevatedButton(
+            onPressed: ()  {
+              Navigator.of(context).pop();
+
+            },
+
+            child: const Text('No', style: TextStyle(color: Colors.black),),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await FirebaseFirestore.instance
+                  .collection('community_posts')
+                  .doc(docId)
+                  .delete();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Yes', style: TextStyle(color: Colors.white),),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,74 +123,78 @@ class _CommunityTabState extends State<CommunityTab>
                   return ListView.builder(
                     padding: const EdgeInsets.only(top: 10, bottom: 10),
                     itemCount: docs.length,
-                    itemBuilder: (context, index) {
-                      final data = docs[index].data() as Map<String, dynamic>;
+                      itemBuilder: (context, index) {
+                        final data = docs[index].data() as Map<String, dynamic>;
+                        final docId = docs[index].id;
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        final isOwnPost = currentUser != null && currentUser.uid == data['userId'];
 
-                      return ScaleTransition(
-                        scale: _animation,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // 🧍 User image (left)
-                              CircleAvatar(
-                                radius: 26,
-                                backgroundImage:
-                                AssetImage('assets/user.png'), // Replace with user image if available
-                              ),
-                              const SizedBox(width: 12),
+                        return ScaleTransition(
+                          scale: _animation,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // 🧍 User image (left)
+                                CircleAvatar(
+                                  radius: 26,
+                                  backgroundImage: AssetImage('assets/user.png'),
+                                ),
+                                const SizedBox(width: 12),
 
-                              // 📦 Content container (right)
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 10,
-                                        spreadRadius: 1,
-                                        offset: Offset(2, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  padding: const EdgeInsets.all(14),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        data['name'] ?? 'User',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
+                                // 📦 Content container (right)
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.4),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.all(14),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                data['name'] ?? 'User',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ),
+                                            if (isOwnPost)
+                                              IconButton(
+                                                icon: const Icon(Icons.delete_outline, size: 20),
+                                                onPressed: () => _showDeleteDialog(docId),
+                                              ),
+                                          ],
                                         ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        data['tip'] ?? '',
-                                        style: const TextStyle(fontSize: 14),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        _formatTimestamp(data['timestamp']),
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey,
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          data['tip'] ?? '',
+                                          style: const TextStyle(fontSize: 14),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          _formatTimestamp(data['timestamp']),
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              )
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+
                   );
                 },
               ),
@@ -163,6 +203,7 @@ class _CommunityTabState extends State<CommunityTab>
             Align(
               alignment: Alignment.bottomCenter,
               child: SafeArea(
+
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                   child: Column(
@@ -172,10 +213,12 @@ class _CommunityTabState extends State<CommunityTab>
                       // ✍️ Input and send row (now comes first)
                       Row(
                         children: [
-                          // Text input with flexible width
+                          // ✏️ Text input (takes most of the width)
                           Expanded(
+
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              margin: EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.only(left: 16, right:16, top: 4),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(24),
@@ -189,37 +232,43 @@ class _CommunityTabState extends State<CommunityTab>
                               ),
                               child: TextField(
                                 controller: _tipController,
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   hintText: 'Write your tip...',
                                   border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                                  suffixIcon: MouseRegion(
+                                    onEnter: (_) => setState(() => isHover = true),
+                                    onExit: (_) => setState(() => isHover = false),
+                                    child: GestureDetector(
+                                      onTap: _submitTip,
+                                      child: Container(
+                                        margin: const EdgeInsets.only(top: 4, bottom: 6, left: 1),
+                                        padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8, top:6),
+                                        decoration: BoxDecoration(
+                                          color: isHover ? Colors.green.withOpacity(0.1) : Colors.transparent,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.send,
+                                          color: isHover ? Colors.green[800] : Colors.green,
+                                          size: 22,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
+
                               ),
                             ),
                           ),
+
+
                           const SizedBox(width: 10),
 
-                          // Send button
-                          Container(
-                            height: 48,
-                            width: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.teal,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.teal.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: Offset(0, 4),
-                                )
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.send, color: Colors.white, size: 22),
-                              onPressed: _submitTip,
-                            ),
-                          ),
+
                         ],
                       ),
+
 
                       const SizedBox(height: 14),
 

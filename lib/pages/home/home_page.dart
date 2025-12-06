@@ -1,14 +1,17 @@
 
   import 'dart:convert';
+import 'dart:io';
+  import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
   import 'package:flutter/material.dart';
   import 'package:firebase_auth/firebase_auth.dart';
+  import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
   import 'package:wellbite/pages/home/tabs/edit_profile_dialoag.dart';
 
   import '../../fancy_well_bite_login.dart';
-  import '../update_profile_page.dart';
   import '/services/api_service.dart';
   import '/services/firestore_service.dart';
 
@@ -50,6 +53,8 @@ import 'package:http/http.dart' as http;
     int selectedBottomIndex = -1;
     bool isDarkTheme = false;
 
+    String profileImageUrl = '';
+
     final Map<String, TextEditingController> searchControllers = {};
     final Map<String, List<String>> searchHistories = {};
     final Map<String, List<dynamic>> favorites = {};
@@ -62,10 +67,12 @@ import 'package:http/http.dart' as http;
 
     String get currentTabKey => selectedBottomIndex != -1 ? bottomNames[selectedBottomIndex] : tabNames[selectedTabIndex];
 
+
     void initState() {
       super.initState();
       currentUser = _auth.currentUser!;
-      apiService = ApiService(apiKey: 'Add Your API Key');
+      // vOZWx7FEJsEjm/2iRW94TA==cPAjO7IHydcSHTRl
+      apiService = ApiService(apiKey: 'vOZWx7FEJsEjm/2iRW94TA==cPAjO7IHydcSHTRl');
       firestoreService = FirestoreService(userId: currentUser.uid);
 
       tabController = TabController(length: tabNames.length, vsync: this);
@@ -293,13 +300,16 @@ import 'package:http/http.dart' as http;
           child: Column(
             children: [
               HeaderRow(
+                currentTabKey: currentTabKey,
                 onDrawerPressed: drawerOpen,
                 onFavoritesPressed: _showFavoritesModal,
                 onThemeTogglePressed: _toggleTheme,
                 isDarkTheme: isDarkTheme,
                 buttonColor: const Color(0xFFFFD700),
               ),
-              SearchBar1(
+
+              if(currentTabKey!="challenge" && currentTabKey!="unique" && currentTabKey!="community" ) SearchBar1(
+
                 controller: searchControllers[key]!,
                 hintText: _getSearchHint(key),
                 onClear: () => _clearSearch(key),
@@ -327,7 +337,6 @@ import 'package:http/http.dart' as http;
         ),
         floatingActionButton: FloatingActionBtn(
           isFormFilled: false,
-          onPressed: () {},
           backgroundColor: currentThemeColor,
         ),
         bottomNavigationBar: HomeBottomNavBar(
@@ -379,9 +388,77 @@ import 'package:http/http.dart' as http;
                             ),
                             child: Row(
                               children: [
-                                const CircleAvatar(
-                                  radius: 30,
-                                  backgroundImage: AssetImage('assets/user.png'),
+                                // const CircleAvatar(
+                                //   radius: 30,
+                                //   backgroundImage: AssetImage('assets/user.png'),
+                                // ),
+                                Stack(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 30,
+                                      backgroundImage: userData['profileImageUrl'] != null
+                                          ? NetworkImage(userData['profileImageUrl'])
+                                          : const AssetImage('assets/user.png') as ImageProvider,
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: GestureDetector(
+                                        onTap:
+                                            () async {
+                                              final picker = ImagePicker();
+                                              final user = FirebaseAuth.instance.currentUser;
+                                              if (user == null) return;
+
+                                              try {
+                                                final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+                                                if (pickedFile == null) {
+                                                  print('❌ No file selected');
+                                                  return;
+                                                }
+
+                                                print('📤 File selected: ${pickedFile.name}');
+
+                                                final Uint8List fileBytes = await pickedFile.readAsBytes();
+                                                final String fileName = '${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+                                                final ref = FirebaseStorage.instance.ref().child('profile_pictures/$fileName');
+
+                                                final uploadTask = ref.putData(fileBytes);
+                                                print('⏳ Upload started...');
+
+                                                await uploadTask.whenComplete(() => print('✅ Upload complete'));
+
+                                                final String downloadUrl = await ref.getDownloadURL();
+                                                print('🌐 Download URL: $downloadUrl');
+
+                                                await FirebaseFirestore.instance
+                                                    .collection('users')
+                                                    .doc(user.uid)
+                                                    .set({'profileImageUrl': downloadUrl}, SetOptions(merge: true));
+
+                                                print('🔥 Firestore updated with image');
+                                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Profile image uploaded!')));
+                                              } catch (e, stackTrace) {
+                                                print('❌ Upload error: $e');
+                                                print(stackTrace);
+                                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+                                              }
+                                            }
+                                        ,
+
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.white,
+                                          ),
+                                          child: const Icon(Icons.edit, size: 16),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(width: 12),
                                 Column(
@@ -539,8 +616,7 @@ import 'package:http/http.dart' as http;
           );
       } else if (key == 'unique') {
         return UniqueTab(
-          favorites: favs,
-          onToggleFavorite: (item) => _toggleFavorite(key, item),
+
 
         );
       } else if (key == 'community') {

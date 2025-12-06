@@ -47,7 +47,8 @@ dependencies:
   shared_preferences: ^2.2.2
   font_awesome_flutter: ^10.7.0
   ntp: ^2.0.0
-
+  image_picker: ^1.0.7
+  firebase_storage: ^12.4.7
 
 
 

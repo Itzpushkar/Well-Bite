@@ -6,13 +6,10 @@ import 'package:http/http.dart' as http;
 import 'package:wellbite/services/api_service.dart'; // Ensure this is imported properly
 
 class UniqueTab extends StatefulWidget {
-  final List<dynamic> favorites;
-  final Function(dynamic) onToggleFavorite;
 
   const UniqueTab({
     Key? key,
-    required this.favorites,
-    required this.onToggleFavorite,
+
   }) : super(key: key);
 
   @override
@@ -31,7 +28,7 @@ class _UniqueTabState extends State<UniqueTab> {
   Future<List<dynamic>> fetchUniqueData() async {
 
     final uri = Uri.parse('https://api.api-ninjas.com/v1/quotes');
-    final response = await http.get(uri, headers: {'X-Api-Key': "Add Your API Key"});
+    final response = await http.get(uri, headers: {'X-Api-Key': "vOZWx7FEJsEjm/2iRW94TA==cPAjO7IHydcSHTRl"});
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -82,8 +79,6 @@ class _UniqueTabState extends State<UniqueTab> {
       );
     }
 
-    final isFavorite = widget.favorites.any((f) => f['quote'] == currentQuote['quote']);
-
     return Center(
       child: SingleChildScrollView(
         child: Padding(
@@ -129,14 +124,7 @@ class _UniqueTabState extends State<UniqueTab> {
                             color: Colors.grey,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: Icon(
-                            isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () => widget.onToggleFavorite(currentQuote),
-                        )
+
                       ],
                     ),
                   ],

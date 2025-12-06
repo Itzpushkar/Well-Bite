@@ -6,10 +6,12 @@ class HeaderRow extends StatelessWidget {
   final VoidCallback onThemeTogglePressed;
   final bool isDarkTheme;
   final String title;
+  final String currentTabKey;
   final dynamic buttonColor;
 
   const HeaderRow({
     Key? key,
+    required this.currentTabKey,
     required this.onDrawerPressed,
     required this.onFavoritesPressed,
     required this.onThemeTogglePressed,
@@ -46,7 +48,7 @@ class HeaderRow extends StatelessWidget {
           // Favorite & theme toggle buttons
           Row(
             children: [
-              _iconCircleButton(icon: Icons.favorite_border, onTap: onFavoritesPressed),
+              if(currentTabKey!="challenge" && currentTabKey!="unique" && currentTabKey!="community" ) _iconCircleButton(icon: Icons.favorite_border, onTap: onFavoritesPressed),
               const SizedBox(width: 10),
               _iconCircleButton(icon: iconThemeToggle, onTap: onThemeTogglePressed),
             ],
